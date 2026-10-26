@@ -1,0 +1,15 @@
+version: 2
+updates:
+Tu dong cap nhat thu vien npm
+- package-ecosystem: "npm"
+directory: "/"
+schedule:
+interval: "weekly"
+open-pull-requests-limit: 3
+labels:
+- "security-patch"
+Tu dong cap nhat GitHub Actions
+- package-ecosystem: "github-actions"
+directory: "/"
+schedule:
+interval: "monthly"
