@@ -1,0 +1,17 @@
+{
+  "name": "dut-core-math-utils-phanthinhanvy",
+  "version": "1.0.0",
+  "description": "Thư viện tối ưu hóa các phép toán đại số cho sinh viên kỹ nghệ phần mềm.",
+  "main": "index.js",
+  "author": "Phan Thị Nhân Vỹ",
+  "license": "MIT",
+  "files": [
+    "index.js"
+  ],
+  "publishConfig": {
+    "registry": "https://registry.npmjs.org/"
+  },
+  "dependencies": {
+    "lodash": "^4.17.15"
+  }
+}
