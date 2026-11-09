@@ -1,0 +1,67 @@
+name: Keyless Artifact Signing with Cosign
+
+on:
+  push:
+    tags: ['v*']
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  id-token: write
+
+jobs:
+  build-and-sign:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: Package Release Artifact
+        run: |
+          tar -czf release.tar.gz index.js package.json package-lock.json
+          sha256sum release.tar.gz > release.tar.gz.sha256
+
+      - name: Install Sigstore Cosign
+        uses: sigstore/cosign-installer@v4
+
+      - name: Sign Artifact Keylessly
+        run: |
+          cosign sign-blob --yes \
+            --bundle release.tar.gz.sigstore.json \
+            release.tar.gz
+
+          jq -er '.messageSignature.signature' \
+            release.tar.gz.sigstore.json > release.tar.gz.sig
+
+          jq -er '(
+            .verificationMaterial.certificate.rawBytes //
+            .verificationMaterial.x509CertificateChain.certificates[0].rawBytes
+          )' release.tar.gz.sigstore.json \
+            | base64 --decode \
+            | openssl x509 -inform DER -out release.tar.gz.pem
+
+          jq '.verificationMaterial.tlogEntries[] |
+            {logIndex, logId}' release.tar.gz.sigstore.json
+
+      - name: Verify Signed Artifact
+        env:
+          SIGNER_IDENTITY: https://github.com/${{ github.workflow_ref }}
+        run: |
+          sha256sum -c release.tar.gz.sha256
+          cosign verify-blob \
+            --bundle release.tar.gz.sigstore.json \
+            --certificate-identity "$SIGNER_IDENTITY" \
+            --certificate-oidc-issuer https://token.actions.githubusercontent.com \
+            release.tar.gz
+          echo "Verified OK"
+
+      - name: Upload Signed Artifacts Package
+        uses: actions/upload-artifact@v4
+        with:
+          name: release-signed-package
+          path: |
+            release.tar.gz
+            release.tar.gz.sig
+            release.tar.gz.pem
+            release.tar.gz.sha256
+            release.tar.gz.sigstore.json
