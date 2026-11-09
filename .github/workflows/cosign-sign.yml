@@ -55,8 +55,8 @@ jobs:
             release.tar.gz
           echo "Verified OK"
 
-      - name: Upload Signed Artifacts Package
-        uses: actions/upload-artifact@v4
+      - name: Install Sigstore Cosign
+        uses: sigstore/cosign-installer@v4.1.2
         with:
           name: release-signed-package
           path: |
