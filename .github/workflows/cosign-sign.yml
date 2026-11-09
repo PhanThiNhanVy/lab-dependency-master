@@ -22,7 +22,7 @@ jobs:
           sha256sum release.tar.gz > release.tar.gz.sha256
 
       - name: Install Sigstore Cosign
-        uses: sigstore/cosign-installer@v4
+        uses: sigstore/cosign-installer@v4.1.2
 
       - name: Sign Artifact Keylessly
         run: |
@@ -55,8 +55,8 @@ jobs:
             release.tar.gz
           echo "Verified OK"
 
-      - name: Install Sigstore Cosign
-        uses: sigstore/cosign-installer@v4.1.2
+      - name: Upload Signed Artifacts Package
+        uses: actions/upload-artifact@v4
         with:
           name: release-signed-package
           path: |
