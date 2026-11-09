@@ -1,0 +1,57 @@
+name: Generate & Scan SBOM
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+permissions:
+  contents: read
+
+jobs:
+  build-sbom:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Generate SPDX SBOM
+        uses: anchore/sbom-action@v0.15.10
+        with:
+          path: .
+          format: spdx-json
+          output-file: sbom.spdx.json
+          upload-artifact: false
+
+      - name: Generate CycloneDX SBOM
+        uses: anchore/sbom-action@v0.15.10
+        with:
+          path: .
+          format: cyclonedx-json
+          output-file: sbom.cyclonedx.json
+          upload-artifact: false
+
+      - name: Scan SBOM with Grype
+        id: scan
+        uses: anchore/scan-action@v7
+        with:
+          sbom: sbom.spdx.json
+          output-format: json
+          fail-build: false
+
+      - name: Show scan summary
+        env:
+          REPORT: ${{ steps.scan.outputs.json }}
+        run: |
+          jq '.matches | length' "$REPORT" | xargs echo "Vulnerability matches:"
+          cp "$REPORT" grype-report.json
+
+      - name: Upload SBOM and scan report
+        uses: actions/upload-artifact@v4
+        with:
+          name: project-sbom-reports
+          path: |
+            sbom.spdx.json
+            sbom.cyclonedx.json
+            grype-report.json
